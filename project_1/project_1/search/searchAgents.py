@@ -409,16 +409,17 @@ def cornersHeuristic(state, problem: CornersProblem):
     "*** YOUR CODE HERE ***"
     unvisted = [x for x in corners if x not in state[1]]
     cumulitiveLength = 0
+    fromHere = state[0]
     while len(unvisted) > 0:
-        length, index = closestCorner(state[0], unvisted)
+        length, index = closestCorner(fromHere, unvisted)
         cumulitiveLength += length
-        unvisted.pop(index)
+        fromHere = unvisted.pop(index)
     
     return cumulitiveLength
     
     
 def closestCorner(state, corners):
-    manhattanDistance = lambda pos, goal: abs(goal[1]-pos[1]) + abs(goal[0] - pos[0])
+    manhattanDistance = lambda pos, goal: abs(pos[1]-goal[1]) + abs(pos[0]-goal[0])
     dists = list()
     for corner in corners:
         dists.append(manhattanDistance(state, corner))
