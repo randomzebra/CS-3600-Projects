@@ -192,7 +192,7 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     "*** YOUR CODE HERE ***"
     visited = set()
     queue =  util.PriorityQueue()
-    queue.push(((problem.getStartState(), list()),None,0),0)
+    queue.push(((problem.getStartState(), list()),None,0),heuristic(problem.getStartState(),problem))
     while (not queue.isEmpty()):
         
         striple = queue.pop()
@@ -206,9 +206,9 @@ def aStarSearch(problem, heuristic=nullHeuristic):
             
             for triple in successorList:
                 temp = triple[0]
-                newtuple = (temp, s[1] + [triple[1]])
-                newtriple = (newtuple,triple[1],striple[2] + triple[2] + heuristic(temp, problem))
-                queue.push(newtriple, newtriple[2])
+                newtuple = (temp, s[1] + [triple[1]]) # state and action list
+                newtriple = (newtuple,triple[1],striple[2] + triple[2]) #state\action tuple, last direction, last cumulitive cost
+                queue.push(newtriple, newtriple[2] + heuristic(triple[0], problem))
     return None
 
 
