@@ -35,12 +35,9 @@ project description for details.
 
 Good luck and happy searching!
 """
-from itertools import count
-from numpy import empty
 from game import Directions
 from game import Agent
 from game import Actions
-from project_1.project_1.search.game import Grid
 import util
 import time
 import search
@@ -418,13 +415,18 @@ def cornersHeuristic(state, problem: CornersProblem):
     
     return cumulitiveLength
     
-    
+
+def manhattanDistance(pos, goal):
+    return abs(pos[1]-goal[1]) + abs(pos[0]-goal[0])
+
 def closestCorner(state, corners):
-    manhattanDistance = lambda pos, goal: abs(pos[1]-goal[1]) + abs(pos[0]-goal[0])
     dists = list()
     for corner in corners:
         dists.append(manhattanDistance(state, corner))
     return min(dists), dists.index(min(dists))
+
+
+
         
         
     
@@ -541,18 +543,115 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
-    coordList = foodGrid.toList()
+    if foodGrid.count() == 0:
+        return 0
     
-    return 0
+    foodList = foodGrid.asList()
 
-def grahamScan(foodList):
-    stack = util.Stack()
-    minx,miny = foodList[1]
+    strategySwitch = 1
+    # niave farthest Distance, 3/4 points
+    if (strategySwitch == 0):
+        maxCords, maxDist = findFarthestFood(position, foodList)    
+        return maxDist
+
+    #naive farthest within subset
+    if (strategySwitch == 1):
+        if len(foodList) == 1:
+            return manhattanDistance(position, foodList[0])
+        max_key, maxval = naiveFarthestFromSubset(foodList, problem)
+        if max_key == -1:
+            if not len(foodList) == 0:
+                return manhattanDistance(position, foodList[0])
+            return 0
+        else:
+            toClosest = findClosestFood(position, list(max_key))
+            retVal = maxval + toClosest[1]
+            return maxval + toClosest[1]
+
+
+def findFarthestFood(cords, foodList):
+    """
+    naive hurestic that simply the finds the farthest food in the 
+    remaining foodlist and uses the manhattan distance as a hureistic
+    """
+    realDist = lambda xy1, xy2: ((xy1[0] - xy2[0]) ** 2 + (xy1[1] - xy2[1]) ** 2) ** 0.5
+    max = -1
+    maxCords = 0,0
     for food in foodList:
-        if miny > food[2]:
-            minx,miny = food
-        elif miny == food[2] and minx == food[1]:
-            minx 
+        tempMax = manhattanDistance(cords, food)
+        if tempMax > max or max <= 0:
+            max = tempMax
+            maxCords = food
+    return (maxCords, max)
+
+def naiveFarthestFromSubset(foodlist: list, problem: FoodSearchProblem):
+    """
+    Dynamic programming approach to finding the farthest pair of remaining food. Every possible 
+    length of food to food is calculated once at the beginning of the problem and is continually
+    referenced for the remaining iterations. Comments will describe the process in more detail!
+    """
+    
+    #catching edgecase
+    if len(foodlist) == 0:
+        return -1, 0
+    
+    listcpy = foodlist.copy() #create copy of foodlist to perserve for later comparison
+    if not problem.heuristicInfo: # if problem.huersticInfo is empty
+        while len(listcpy):
+                food = listcpy.pop(0) # pop first element of list to avoid duplicate reverse order comparisons
+                # calculate and add manhattan distance between two points as a key value pair. Key = tuple of compared coodinates.
+                # Value = manhattan distance
+                for compare in listcpy: 
+                    dist = manhattanDistance(food,compare) 
+                    problem.heuristicInfo[(food, compare)] = dist
+    
+    # find key for max value
+    max_key = max(problem.heuristicInfo, key = problem.heuristicInfo.get)
+    tempDict = dict()
+    # test if both keys are in the foodlist. If not, we pop the key value pair and store it in a temporary dictionary to be recombined later. 
+    # This way, we can keep popping kv pairs until we find the largest valid pair, or return if there is none left. It is important to 
+    # perserve the orginal dictionary becuase if the search traverses to a dead end, it must return to some previous parent, and the food 
+    # state will change
+    while(max_key[1] not in foodlist or max_key[0]  not in foodlist): 
+        poppedValue = problem.heuristicInfo.pop(max_key) # pop!
+        tempDict[max_key] = poppedValue # saving for recombination
+        if not problem.heuristicInfo: # If there are no valid food pairs left!
+            problem.heuristicInfo.update(tempDict)
+            return -1,0
+        
+        max_key = max(problem.heuristicInfo, key = problem.heuristicInfo.get) # find the next largest value
+    # recombine 
+    problem.heuristicInfo.update(tempDict)
+    maxVal = problem.heuristicInfo[max_key]
+    return max_key, maxVal
+
+
+def farthestFromSubset(foodList: list):
+    return 0
+def grahamScan(foodList:  list):
+    """returns a list of points denoting the convex
+
+    Args:
+        foodList (list): [description]
+    """
+    copyList = foodList.copy()
+    stack = util.Stack()
+    #compute the bottom left coordinate 
+    bottomLeft = min(foodList, key = lambda coords: (coords[1], coords[0])) 
+    
+    #calculate the cross product between two points (used to sort the given list of points)
+    crossPoints = lambda p1, p2: p1[0]*p2[1] - p1[1]*p2[0]
+    #given three points, with p1 repersenting a starting point, calculate the cross product of the end points of vectors p1p2 and p1p3
+    crossProduct = lambda p1, p2, p3: crossPoints((p3[0]-p1[0], p3[1]-p1[1]), (p2[0]-p1[0],p2[1]-p1[0]))
+    
+    copyList.sort(key = lambda food: crossProduct(bottomLeft, food))
+    
+    # The way graham scan works is it takes the bottom left corner and compares the cross product of it to the first item in the sorted list (call it p1), and the second point
+    # in the sorted list, call it p2. Note that the earlier the point in the list the lower the polar angle. It compares the location of p1 and p2 relative to the bottom left
+    # corner. If it has to "turn left" to reach the next point p3, then p3 is on the outside of the shape is pushed onto the stack. If p1
+    #
+    
+    
 def findClosestFood(cords, foodList):
     realDist = lambda xy1, xy2: ((xy1[0] - xy2[0]) ** 2 + (xy1[1] - xy2[1]) ** 2) ** 0.5
     min = -1
@@ -587,6 +686,8 @@ class ClosestDotSearchAgent(SearchAgent):
         self.actionIndex = 0
         print('Path found with cost %d.' % len(self.actions))
 
+    
+    
     def findPathToClosestDot(self, gameState):
         """
         Returns a path (a list of actions) to the closest dot, starting from gameState.
@@ -596,9 +697,39 @@ class ClosestDotSearchAgent(SearchAgent):
         food = gameState.getFood()
         walls = gameState.getWalls()
         problem = AnyFoodSearchProblem(gameState)
-
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        foodList = food.asList()
+        return self.modbfs(startPosition, foodList, problem)
+    
+    def modbfs(self, gameState, foodList: list, problem):
+        """ 
+        This implimentation is a modified version of bfs that returns after it hits ANY food, and returns the path
+        """
+        visited = set()
+        queue =  util.Queue()
+        queue.push(((gameState, list()),None,None))
+        while (not queue.isEmpty()): 
+            
+            striple = queue.pop()
+            s = striple[0]
+            if s[0] in foodList:
+                return s[1]
+            if s[0] not in visited:
+                visited.add(s[0])
+                successorList = problem.getSuccessors(s[0])
+                
+                for triple in successorList:
+                    temp = triple[0]
+                    newtuple = (temp, s[1] + [triple[1]])
+                    newtriple = (newtuple,triple[1],triple[2])
+                    queue.push(newtriple)
+        print("hit")
+        return None
+    
+    
+
+        
+    
 
 
 class AnyFoodSearchProblem(PositionSearchProblem):
@@ -635,7 +766,11 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         x, y = state
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        goal = min(self.food.asList(), key = lambda food: manhattanDistance(state, food))
+        if state == goal:
+            return True
+        else:
+            return False
 
 
 ##################
