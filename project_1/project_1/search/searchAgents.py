@@ -40,6 +40,7 @@ from numpy import empty
 from game import Directions
 from game import Agent
 from game import Actions
+from project_1.project_1.search.game import Grid
 import util
 import time
 import search
@@ -413,7 +414,7 @@ def cornersHeuristic(state, problem: CornersProblem):
     while len(unvisted) > 0:
         length, index = closestCorner(fromHere, unvisted)
         cumulitiveLength += length
-        fromHere = unvisted.pop(index)
+        fromHere =  unvisted.pop(index)
     
     return cumulitiveLength
     
@@ -540,7 +541,30 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
+    coordList = foodGrid.toList()
+    
     return 0
+
+def grahamScan(foodList):
+    stack = util.Stack()
+    minx,miny = foodList[1]
+    for food in foodList:
+        if miny > food[2]:
+            minx,miny = food
+        elif miny == food[2] and minx == food[1]:
+            minx 
+def findClosestFood(cords, foodList):
+    realDist = lambda xy1, xy2: ((xy1[0] - xy2[0]) ** 2 + (xy1[1] - xy2[1]) ** 2) ** 0.5
+    min = -1
+    minCords = 0,0
+    for food in foodList:
+        tempMin = realDist(cords, food)
+        if tempMin < min or min <= 0:
+            min = tempMin
+            minCords = food
+            
+    return (minCords, min)
+        
 
 
 class ClosestDotSearchAgent(SearchAgent):
