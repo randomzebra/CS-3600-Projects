@@ -1,9 +1,5 @@
 import itertools
-from pickle import FALSE
 import random
-from re import S
-from turtle import update
-from xml.sax.handler import all_properties
 import busters
 import game
 
