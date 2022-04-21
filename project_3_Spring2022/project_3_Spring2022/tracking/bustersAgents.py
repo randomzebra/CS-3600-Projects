@@ -174,7 +174,7 @@ class GreedyBustersAgent(BustersAgent):
             maxBelief = beliefDist.argMax() # predicited place for a ghost
             for action in legal:
                 successorPos = Actions.getSuccessor(pacmanPosition, action)
-                tryDist = self.distancer.getDistance(successorPos, maxBelief)
+                tryDist = self.distancer.getDistance(successorPos, maxBelief) # find the smallest distance between ghost and legal action
                 if (tryDist < closest):
                     closest = tryDist
                     choseAct = action
